@@ -1,21 +1,33 @@
+import { ISOTimestamp } from "osu-web.js";
+
 export interface IBeatmapInfo {
-  accuracy: number; //float
-  ar: number; //float
+  id: number; //int
+  //from which set is the map - use for grouping maps(diffs) int sets
   beatmapset_id: number; //int
-  bpm: number | undefined; //float?
+  difficulty_rating: number; //decimal
+  mode: string;
+  total_length: number; //int
+  user_id: number; //int
+  version: string;
+  accuracy: number; //decimal
+  ar: number; //decimal
+  cs: number; //decimal
+  drain: number; //decimal
+  bpm: number; //decimal
+  max_combo: number; //integer
   convert: boolean;
-  count_circles: number; //int
-  count_sliders: number; //int
-  count_spinners: number; //int
-  cs: number; //float
-  deleted_at: Date | undefined;
-  drain: number; //float
-  hit_length: number; //int
+  count_circles: number; //integer
+  count_sliders: number; //integer
+  count_spinners: number; //integer
+  hit_length: number; //integer
   is_scoreable: boolean;
-  last_updated: Date;
-  mode_int: number; //int
-  passcount: number; //int
-  playcount: number; //int
-  ranked: number; //int //See Rank status for list of possible values.
+  last_updated: ISOTimestamp;
+  mode_int: number; //integer
+  passcount: number; //integer
+  playcount: number; //integer
   url: string;
+  ranked: boolean;
+  status: string;
+  completed: boolean | undefined;
+  //then a list of beatmaps in a set
 }
