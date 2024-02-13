@@ -2,11 +2,13 @@ import { IAuthToken } from "../interfaces/IAuthToken";
 import { IBeatmapsetInfo } from "../interfaces/IBeatmapsetInfo";
 import { mapResponseArrayToBeatmapsetInfo } from "../mappers/BeatmapsetMapper";
 
-export const getBeatmapTest = async (authToken: IAuthToken) => {
+export const getBeatmapTest = async (
+  authToken: IAuthToken,
+  cursor_string: string | null
+) => {
   try {
     let resp = await fetch(
-      "https://corsproxy.io/?" +
-        encodeURIComponent("https://osu.ppy.sh/api/v2/beatmapsets/search"),
+      `http://localhost:21727/getBeatmapTest?authTokenString=${authToken.access_token}&cursorString=${cursor_string}`,
       {
         method: "GET",
         headers: {
@@ -18,19 +20,27 @@ export const getBeatmapTest = async (authToken: IAuthToken) => {
     );
     if (resp.ok) {
       const respJson = await resp.json();
-      const mapped = mapResponseArrayToBeatmapsetInfo(respJson.beatmapsets);
-      await fetch("http://localhost:21727/insertBeatmapsets", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(mapped),
-      });
+      return {
+        beatmapsets: mapResponseArrayToBeatmapsetInfo(respJson.beatmapsets),
+        cursor_string: respJson.cursor_string,
+      };
     }
   } catch (err) {
     console.log("CANT FETCH BEATMAPS FROM OSU WEBSITE");
   }
+};
+
+export const insertBeatmapsetsIntoNode = async (
+  beatmapsets: IBeatmapsetInfo[]
+) => {
+  await fetch("http://localhost:21727/insertBeatmapsets", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(beatmapsets),
+  });
 };
 
 export const getBeatmapTestNode = async (year: number) => {

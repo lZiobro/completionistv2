@@ -17,6 +17,14 @@ code {
   margin-left: auto;
   margin-right: auto;
 }
+
+.beatmap-table table {
+  background-color: silver;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
 .beatmap-table,
 td {
   border: 1px solid black;
@@ -43,4 +51,8 @@ tr td.beatmap-table-unplayed {
 
 .make-row-visible {
   display: table-row;
+}
+
+.admin-panel {
+  background-color: red;
 }

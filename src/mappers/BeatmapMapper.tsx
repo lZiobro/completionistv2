@@ -29,6 +29,7 @@ export const mapResponseToBeatmapInfo = (response: any) => {
     url: response.url,
     user_id: response.user_id,
     version: response.version,
+    userScore: undefined,
   };
   return result;
 };

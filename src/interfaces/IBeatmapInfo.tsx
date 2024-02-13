@@ -1,4 +1,5 @@
 import { ISOTimestamp } from "osu-web.js";
+import { IUserScoreInfo } from "./IUserScoreInfo";
 
 export interface IBeatmapInfo {
   id: number; //int
@@ -29,5 +30,6 @@ export interface IBeatmapInfo {
   ranked: boolean;
   status: string;
   completed: boolean | undefined;
+  userScore: IUserScoreInfo | undefined;
   //then a list of beatmaps in a set
 }

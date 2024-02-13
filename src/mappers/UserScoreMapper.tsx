@@ -6,7 +6,7 @@ export const mapResponseToUserScoreInfo = (response: any) => {
     artist: response.artist,
     artist_unicode: response.artist_unicode,
     beatmap_id: response.beatmap.id,
-    beatmapset_id: response.beatmapset.id,
+    beatmapset_id: response.beatmap.id,
     best_id: response.best_id,
     created_at: response.created_at,
     id: response.id,
