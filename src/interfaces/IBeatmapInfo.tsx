@@ -1,6 +1,3 @@
-import { ISOTimestamp } from "osu-web.js";
-import { IUserScoreInfo } from "./IUserScoreInfo";
-
 export interface IBeatmapInfo {
   id: number; //int
   //from which set is the map - use for grouping maps(diffs) int sets
@@ -22,7 +19,7 @@ export interface IBeatmapInfo {
   count_spinners: number; //integer
   hit_length: number; //integer
   is_scoreable: boolean;
-  last_updated: ISOTimestamp;
+  last_updated: string;
   mode_int: number; //integer
   passcount: number; //integer
   playcount: number; //integer
@@ -30,6 +27,5 @@ export interface IBeatmapInfo {
   ranked: boolean;
   status: string;
   completed: boolean | undefined;
-  userScore: IUserScoreInfo | undefined;
   //then a list of beatmaps in a set
 }

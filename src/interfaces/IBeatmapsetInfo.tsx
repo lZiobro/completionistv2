@@ -1,4 +1,3 @@
-import { ISOTimestamp } from "osu-web.js";
 import { IBeatmapInfo } from "./IBeatmapInfo";
 
 export interface IBeatmapsetInfo {
@@ -37,9 +36,9 @@ export interface IBeatmapsetInfo {
   bpm: number; //decimal
   is_scoreable: boolean;
   ranked: boolean;
-  ranked_date: ISOTimestamp;
-  submitted_date: ISOTimestamp;
-  last_updated: ISOTimestamp;
+  ranked_date: string;
+  submitted_date: string;
+  last_updated: string;
   tags: string;
   spotlight: boolean;
   offset: number; //int

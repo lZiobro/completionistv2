@@ -1,4 +1,5 @@
 import { IBeatmapInfo } from "../interfaces/IBeatmapInfo";
+import { IBeatmapView } from "../interfaces/IBeatmapView";
 
 export const mapResponseToBeatmapInfo = (response: any) => {
   const result: IBeatmapInfo = {
@@ -29,7 +30,6 @@ export const mapResponseToBeatmapInfo = (response: any) => {
     url: response.url,
     user_id: response.user_id,
     version: response.version,
-    userScore: undefined,
   };
   return result;
 };
@@ -37,6 +37,27 @@ export const mapResponseToBeatmapInfo = (response: any) => {
 export const mapResponseArrayToBeatmapInfo = (responseArray: any) => {
   const resultArray: IBeatmapInfo[] = responseArray.map((response: any) => {
     return mapResponseToBeatmapInfo(response);
+  });
+  return resultArray;
+};
+
+export const mapResponseToBeatmapView = (response: any) => {
+  const result: IBeatmapView = {
+    accuracy: response.accuracy,
+    beatmapset_id: response.beatmapset_id,
+    completed: undefined,
+    convert: response.conver,
+    id: response.id,
+    ranked: response.ranked,
+    url: response.url,
+    version: response.version,
+  };
+  return result;
+};
+
+export const mapResponseArrayToBeatmapView = (responseArray: any) => {
+  const resultArray: IBeatmapView[] = responseArray.map((response: any) => {
+    return mapResponseToBeatmapView(response);
   });
   return resultArray;
 };

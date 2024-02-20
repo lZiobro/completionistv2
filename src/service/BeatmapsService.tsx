@@ -21,8 +21,11 @@ export const getBeatmapTest = async (
     if (resp.ok) {
       const respJson = await resp.json();
       return {
-        beatmapsets: mapResponseArrayToBeatmapsetInfo(respJson.beatmapsets),
-        cursor_string: respJson.cursor_string,
+        beatmapsets: mapResponseArrayToBeatmapsetInfo(
+          respJson.response.beatmapsets
+        ),
+        cursor_string: respJson.response.cursor_string,
+        ratelimitRemaining: respJson.ratelimitRemaining,
       };
     }
   } catch (err) {
@@ -43,11 +46,19 @@ export const insertBeatmapsetsIntoNode = async (
   });
 };
 
-export const getBeatmapTestNode = async (year: number) => {
-  console.log(`http://localhost:21727/getBeatmapsetsForYear?year=${year}`);
+export const getBeatmapTestNode = async (
+  year: number,
+  month: number | null = null,
+  selectedGamemode: string | null = null
+) => {
   try {
     let resp = await fetch(
-      `http://localhost:21727/getBeatmapsetsForYear?year=${year}`,
+      // selectedGamemode
+      //   ? `http://localhost:21727/getBeatmapsetsForYear?year=${year}&month=${month}&gamemode=${selectedGamemode}`
+      //   : `http://localhost:21727/getBeatmapsetsForYear?year=${year}&month=${month}`,
+      `http://localhost:21727/getBeatmapsetsForYear?year=${year}${
+        month !== null ? `&month=${month}` : ""
+      }${selectedGamemode !== null ? `&gamemode=${selectedGamemode}` : ""}`,
       {
         method: "GET",
         headers: {
@@ -58,6 +69,33 @@ export const getBeatmapTestNode = async (year: number) => {
     );
     if (resp.ok) {
       resp = await resp.json();
+      // console.log(resp);
+      return resp as unknown as IBeatmapsetInfo[];
+    }
+  } catch (err) {
+    console.log("CANT FETCH BEATMAPS FROM NODE SERVER");
+  }
+};
+
+export const getAllBeatmapTestNode = async (
+  selectedGamemode: string | null = null
+) => {
+  try {
+    let resp = await fetch(
+      selectedGamemode
+        ? `http://localhost:21727/getBeatmapsetsForYear?gamemode=${selectedGamemode}`
+        : `http://localhost:21727/getBeatmapsetsForYear?`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (resp.ok) {
+      resp = await resp.json();
+      console.log(resp);
       return resp as unknown as IBeatmapsetInfo[];
     }
   } catch (err) {

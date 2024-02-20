@@ -1,4 +1,5 @@
 import { IUserScoreInfo } from "../interfaces/IUserScoreInfo";
+import { IUserScoreView } from "../interfaces/IUserScoreView";
 
 export const mapResponseToUserScoreInfo = (response: any) => {
   const result: IUserScoreInfo = {
@@ -36,6 +37,24 @@ export const mapResponseToUserScoreInfo = (response: any) => {
 
 export const mapResponseArrayToUserScoreInfo = (responseArray: any) => {
   const resultArray: IUserScoreInfo[] = responseArray.map((response: any) => {
+    return mapResponseToUserScoreInfo(response);
+  });
+  return resultArray;
+};
+
+export const mapResponseToUserScoreView = (response: any) => {
+  const result: IUserScoreView = {
+    beatmap_id: response.beatmap.id,
+    beatmapset_id: response.beatmap.id,
+    created_at: response.created_at,
+    id: response.id,
+    mods: response.mods,
+  };
+  return result;
+};
+
+export const mapResponseArrayToUserScoreView = (responseArray: any) => {
+  const resultArray: IUserScoreView[] = responseArray.map((response: any) => {
     return mapResponseToUserScoreInfo(response);
   });
   return resultArray;
