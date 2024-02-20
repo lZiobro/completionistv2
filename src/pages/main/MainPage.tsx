@@ -1,20 +1,17 @@
-import { useEffect, useRef, useState } from "react";
-import { IAuthToken } from "../../interfaces/IAuthToken";
+import { useRef, useState } from "react";
 import { IBeatmapsetInfo } from "../../interfaces/IBeatmapsetInfo";
 import { IUserScoreInfo } from "../../interfaces/IUserScoreInfo";
-import { getAuthTest } from "../../service/OsuwebService";
-import {
-  getUserScoresOnBeatmapsTestNode,
-  getUserScoresTestNode,
-} from "../../service/UserService";
-import { getBeatmapTestNode } from "../../service/BeatmapsService";
 import { IBeatmapInfo } from "../../interfaces/IBeatmapInfo";
+import { IUserScoreView } from "../../interfaces/IUserScoreView";
+import { IBeatmapsetView } from "../../interfaces/IBeatmapsetView";
+import { getUserScoresOnBeatmapsNode } from "../../service/UserService";
+import { getBeatmapsetsNode } from "../../service/BeatmapsService";
 
 const MainPage = () => {
-  const [beatmapsets, setBeatmapsets] = useState<IBeatmapsetInfo[] | undefined>(
+  const [beatmapsets, setBeatmapsets] = useState<IBeatmapsetView[] | undefined>(
     undefined
   );
-  const [userScores, setUserScores] = useState<IUserScoreInfo[] | undefined>(
+  const [userScores, setUserScores] = useState<IUserScoreView[] | undefined>(
     undefined
   );
   const userIdRef = useRef<any>();
@@ -35,40 +32,6 @@ const MainPage = () => {
       checkForUserScoreOnMapSet(userScores, beatmapset)
     );
     return beatmapsetsUpdated;
-  };
-
-  //private funcs
-  const handleRowClick = async (e: any, beatmapsetId: number) => {
-    //get detailed userScore for given beatmap and save it on the beatmap model
-    // const beatmapset = beatmapsets?.filter((x) => x.id == beatmapsetId).at(0);
-    // const beatmapsetIndex = beatmapsets?.map((x) => x.id).indexOf(beatmapsetId);
-
-    // for await (const beatmap of beatmapset?.beatmaps!) {
-    //   const userScore = userScores
-    //     ?.filter((x) => x.beatmap_id === beatmap.id)
-    //     ?.at(0);
-    //   beatmap.userScore = userScore;
-    //   console.log(userScore);
-    // }
-    // console.log(beatmapset);
-    // const beatmapsetsUpdated = [
-    //   ...beatmapsets!.slice(0, beatmapsetIndex),
-    //   beatmapset,
-    //   ...beatmapsets!.slice(beatmapsetIndex! + 1),
-    // ];
-
-    // setBeatmapsets(beatmapsetsUpdated as IBeatmapsetInfo[]);
-
-    var hiddenRows = Array.from(
-      document.getElementsByClassName("hidden-row-" + beatmapsetId)
-    );
-    hiddenRows.forEach((element) => {
-      if (element.classList.contains("make-row-visible")) {
-        element.classList.remove("make-row-visible");
-      } else {
-        element.classList.add("make-row-visible");
-      }
-    });
   };
 
   const checkForUserScoreOnMapSet = (
@@ -101,15 +64,13 @@ const MainPage = () => {
     const userId =
       userIdRef.current.value === "" ? 2163544 : userIdRef.current.value;
 
-    // const userScores = await getUserScoresTestNode(userId, selectedGamemode);
-
     const beatmaps = beatmapsets?.map((beatmapset) => {
       return beatmapset.beatmaps;
     });
 
     let beatmaps2: IBeatmapInfo[] = Array.prototype.concat.apply([], beatmaps!);
 
-    const userScores = await getUserScoresOnBeatmapsTestNode(
+    const userScores = await getUserScoresOnBeatmapsNode(
       userId,
       selectedGamemode,
       beatmaps2.map((x) => x.id)
@@ -130,7 +91,7 @@ const MainPage = () => {
     const beatmapsMonth = Number.isNaN(parseInt(beatmapsMonthRef.current.value))
       ? null
       : parseInt(beatmapsMonthRef.current.value)!;
-    beatmapsets = (await getBeatmapTestNode(
+    beatmapsets = (await getBeatmapsetsNode(
       beatmapsYear,
       beatmapsMonth,
       gameMode
@@ -180,10 +141,23 @@ const MainPage = () => {
           `;
       })
     );
-    console.log(dupa);
+
     const blob = new Blob(dupa!.flat(2), { type: "octet/stream" });
     const url = URL.createObjectURL(blob);
     setExportUrl(url);
+  };
+
+  const handleRowClick = async (e: any, beatmapsetId: number) => {
+    var hiddenRows = Array.from(
+      document.getElementsByClassName("hidden-row-" + beatmapsetId)
+    );
+    hiddenRows.forEach((element) => {
+      if (element.classList.contains("make-row-visible")) {
+        element.classList.remove("make-row-visible");
+      } else {
+        element.classList.add("make-row-visible");
+      }
+    });
   };
 
   return (

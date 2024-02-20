@@ -1,4 +1,4 @@
-import { IBeatmapInfo } from "./IBeatmapInfo";
+import { IBeatmapView } from "./IBeatmapView";
 
 export interface IBeatmapsetView {
   id: number; //int
@@ -6,7 +6,7 @@ export interface IBeatmapsetView {
   status: string;
   title: string;
   ranked_date: string;
-  beatmaps: IBeatmapInfo[];
+  beatmaps: IBeatmapView[];
   completed: number | undefined; //0 - uncompleted, 1 - partial, 2 - completed
   //then a list of beatmaps in a set
 }

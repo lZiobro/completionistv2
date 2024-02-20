@@ -44,6 +44,9 @@ export const mapResponseArrayToUserScoreInfo = (responseArray: any) => {
 
 export const mapResponseToUserScoreView = (response: any) => {
   const result: IUserScoreView = {
+    rank: response.rank,
+    statistics_count_miss: response.statistics.count_miss,
+    accuracy: response.accuracy,
     beatmap_id: response.beatmap.id,
     beatmapset_id: response.beatmap.id,
     created_at: response.created_at,
@@ -55,7 +58,7 @@ export const mapResponseToUserScoreView = (response: any) => {
 
 export const mapResponseArrayToUserScoreView = (responseArray: any) => {
   const resultArray: IUserScoreView[] = responseArray.map((response: any) => {
-    return mapResponseToUserScoreInfo(response);
+    return mapResponseToUserScoreView(response);
   });
   return resultArray;
 };

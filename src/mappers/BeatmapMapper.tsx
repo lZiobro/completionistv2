@@ -50,6 +50,7 @@ export const mapResponseToBeatmapView = (response: any) => {
     id: response.id,
     ranked: response.ranked,
     url: response.url,
+    mode: response.mode,
     version: response.version,
   };
   return result;

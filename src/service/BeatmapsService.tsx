@@ -2,13 +2,13 @@ import { IAuthToken } from "../interfaces/IAuthToken";
 import { IBeatmapsetInfo } from "../interfaces/IBeatmapsetInfo";
 import { mapResponseArrayToBeatmapsetInfo } from "../mappers/BeatmapsetMapper";
 
-export const getBeatmapTest = async (
+export const getBeatmapsets = async (
   authToken: IAuthToken,
   cursor_string: string | null
 ) => {
   try {
     let resp = await fetch(
-      `http://localhost:21727/getBeatmapTest?authTokenString=${authToken.access_token}&cursorString=${cursor_string}`,
+      `http://localhost:21727/getBeatmapsets?authTokenString=${authToken.access_token}&cursorString=${cursor_string}`,
       {
         method: "GET",
         headers: {
@@ -46,16 +46,13 @@ export const insertBeatmapsetsIntoNode = async (
   });
 };
 
-export const getBeatmapTestNode = async (
+export const getBeatmapsetsNode = async (
   year: number,
   month: number | null = null,
   selectedGamemode: string | null = null
 ) => {
   try {
     let resp = await fetch(
-      // selectedGamemode
-      //   ? `http://localhost:21727/getBeatmapsetsForYear?year=${year}&month=${month}&gamemode=${selectedGamemode}`
-      //   : `http://localhost:21727/getBeatmapsetsForYear?year=${year}&month=${month}`,
       `http://localhost:21727/getBeatmapsetsForYear?year=${year}${
         month !== null ? `&month=${month}` : ""
       }${selectedGamemode !== null ? `&gamemode=${selectedGamemode}` : ""}`,
@@ -69,7 +66,6 @@ export const getBeatmapTestNode = async (
     );
     if (resp.ok) {
       resp = await resp.json();
-      // console.log(resp);
       return resp as unknown as IBeatmapsetInfo[];
     }
   } catch (err) {
@@ -77,7 +73,7 @@ export const getBeatmapTestNode = async (
   }
 };
 
-export const getAllBeatmapTestNode = async (
+export const getAllBeatmapsNode = async (
   selectedGamemode: string | null = null
 ) => {
   try {
@@ -95,7 +91,6 @@ export const getAllBeatmapTestNode = async (
     );
     if (resp.ok) {
       resp = await resp.json();
-      console.log(resp);
       return resp as unknown as IBeatmapsetInfo[];
     }
   } catch (err) {

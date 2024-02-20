@@ -1,18 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { IAuthToken } from "../../interfaces/IAuthToken";
-import { IBeatmapsetInfo } from "../../interfaces/IBeatmapsetInfo";
-import { getAuthTest } from "../../service/OsuwebService";
+import { getAuth } from "../../service/OsuwebService";
 import {
-  getAllBeatmapTestNode,
-  getBeatmapTest,
-  getBeatmapTestNode,
+  getAllBeatmapsNode,
+  getBeatmapsets,
+  getBeatmapsetsNode,
   insertBeatmapsetsIntoNode,
 } from "../../service/BeatmapsService";
 import {
   getUserScoreOnBeatmap,
-  getUserScoresTestNode,
+  getUserScoresNode,
 } from "../../service/UserService";
-import { IUserScoreInfo } from "../../interfaces/IUserScoreInfo";
 import { mapResponseArrayToUserScoreInfo } from "../../mappers/UserScoreMapper";
 import { IBeatmapInfo } from "../../interfaces/IBeatmapInfo";
 
@@ -27,9 +25,6 @@ const AdminPanelPage = (props: {
   const [code, setCode] = useState<string | null>("");
   const userIdRef = useRef<any>();
   const [beatmapsYear, setBeatmapsYear] = useState<number | null>(null);
-  const [beatmapsets, setBeatmapsets] = useState<IBeatmapsetInfo[] | undefined>(
-    undefined
-  );
   const [selectedGamemode, setSelectedGamemode] = useState<string>("osu");
   const [unplayedOnly, setUnplayedOnly] = useState<boolean>(true);
   const [beatmapCountToCheck, setBeatmapCountToCheck] = useState<number>(0);
@@ -43,7 +38,7 @@ const AdminPanelPage = (props: {
   }, []);
 
   const fetchAuthToken = async () => {
-    props.setAuthToken(await getAuthTest(code!));
+    props.setAuthToken(await getAuth(code!));
     const searchParams = new URLSearchParams(window.location.search);
     searchParams.delete("code");
   };
@@ -54,13 +49,11 @@ const AdminPanelPage = (props: {
     if (props.authToken === undefined) {
       return;
     }
-    const resp = await getBeatmapTest(props.authToken, cursor);
-    // console.log(resp);
+    const resp = await getBeatmapsets(props.authToken, cursor);
     return resp;
   };
 
   const fetchAndUploadBeatmapsDateAsc = async () => {
-    // let cursor = "eyJhcHByb3ZlZF9kYXRlIjoxNzA0Mjk3NzkzMDAwLCJpZCI6MTk0ODk2MH0";
     let cursor = null;
     while (true) {
       const beatmapsetsWithCursorAndRatelimit: any =
@@ -84,52 +77,6 @@ const AdminPanelPage = (props: {
     }
   };
 
-  const fetchUserScoresAndUpload_old = async () => {
-    if (props.authToken === null || props.authToken === undefined) {
-      return;
-    }
-
-    const beatmapsets = await fetchBeatmapsForYear(2007);
-
-    const userScoresArray: IUserScoreInfo[] = [];
-
-    // const beatmaps = beatmapsets?.slice(0, 5).map((beatmapset) => {
-    const beatmaps = beatmapsets?.map((beatmapset) => {
-      return beatmapset.beatmaps;
-    });
-
-    var beatmaps2: IUserScoreInfo[] = Array.prototype.concat.apply(
-      [],
-      beatmaps!
-    );
-
-    for await (const beatmap of beatmaps2!) {
-      const response = (await getUserScoreOnBeatmap(
-        beatmap.id,
-        7552274,
-        props.authToken,
-        selectedGamemode
-      ))!;
-      const resp = response.score;
-      if (resp !== null && resp !== undefined) {
-        userScoresArray.push(resp);
-      }
-      //   await new Promise((r) => setTimeout(r, 1000));
-    }
-
-    // console.log(userScoresArray);
-
-    const mapped = mapResponseArrayToUserScoreInfo(userScoresArray);
-    await fetch("http://localhost:21727/insertUserScores", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(mapped),
-    });
-  };
-
   const fetchUserScoresAndUpload = async () => {
     if (!props.authToken) {
       return;
@@ -138,12 +85,11 @@ const AdminPanelPage = (props: {
     if (beatmapsYear) {
       beatmapsets = await fetchBeatmapsForYear(beatmapsYear);
     } else {
-      beatmapsets = await getAllBeatmapTestNode(
+      beatmapsets = await getAllBeatmapsNode(
         convertsOnly ? "osu" : selectedGamemode
       );
     }
 
-    // const beatmaps = beatmapsets?.slice(0, 5).map((beatmapset) => {
     const beatmaps = beatmapsets?.map((beatmapset) => {
       return beatmapset.beatmaps;
     });
@@ -153,7 +99,7 @@ const AdminPanelPage = (props: {
     if (unplayedOnly) {
       const userId =
         userIdRef.current.value === "" ? 2163544 : userIdRef.current.value;
-      const userScores = await getUserScoresTestNode(userId, selectedGamemode);
+      const userScores = await getUserScoresNode(userId, selectedGamemode);
 
       beatmaps2 = beatmaps2?.filter(
         (x) => !userScores!.some((y) => y.beatmap_id === x.id)
@@ -202,12 +148,11 @@ const AdminPanelPage = (props: {
         count += 20;
         setCheckedBeatmapCount(count);
       }
-      //   await new Promise((r) => setTimeout(r, 1000));
     }
   };
 
   const fetchBeatmapsForYear = async (beatmapsYear: number) => {
-    return await getBeatmapTestNode(
+    return await getBeatmapsetsNode(
       Number.isNaN(beatmapsYear) ? 2007 : beatmapsYear!
     );
   };

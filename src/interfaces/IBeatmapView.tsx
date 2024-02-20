@@ -7,6 +7,7 @@ export interface IBeatmapView {
   convert: boolean;
   url: string;
   ranked: boolean;
+  mode: string;
   completed: boolean | undefined;
   //then a list of beatmaps in a set
 }
