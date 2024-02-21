@@ -2,17 +2,21 @@ import { useEffect, useRef, useState } from "react";
 import { IAuthToken } from "../../interfaces/IAuthToken";
 import { getAuth } from "../../service/OsuwebService";
 import {
+  fetchBeatmapsetById,
   getAllBeatmapsNode,
+  getAllBeatmapsetsNode,
   getBeatmapsets,
   getBeatmapsetsNode,
+  insertBeatmapsetIntoNode,
   insertBeatmapsetsIntoNode,
 } from "../../service/BeatmapsService";
 import {
-  getUserScoreOnBeatmap,
+  getAllUserScoresOnBeatmap,
   getUserScoresNode,
 } from "../../service/UserService";
 import { mapResponseArrayToUserScoreInfo } from "../../mappers/UserScoreMapper";
 import { IBeatmapInfo } from "../../interfaces/IBeatmapInfo";
+import { beatmapsetsIdsArray } from "../../misc/beatmapsetsList";
 
 const AdminPanelPage = (props: {
   authToken: IAuthToken | undefined;
@@ -29,6 +33,10 @@ const AdminPanelPage = (props: {
   const [unplayedOnly, setUnplayedOnly] = useState<boolean>(true);
   const [beatmapCountToCheck, setBeatmapCountToCheck] = useState<number>(0);
   const [checkedBeatmapCount, setCheckedBeatmapCount] = useState<number>(0);
+  const [beatmapDbOverlapCount, setBeatmapDbOverlapCount] = useState<number>(0);
+  const [beatmapsToFetchCount, setBeatmapsToFetchCount] = useState<number>(0);
+  const [fetchedBeatmapsetsCount, setFetchedBeatmapsetsCount] =
+    useState<number>(0);
   const [convertsOnly, setConvertsOnly] = useState<boolean>(false);
 
   useEffect(() => {
@@ -61,6 +69,8 @@ const AdminPanelPage = (props: {
       await insertBeatmapsetsIntoNode(
         beatmapsetsWithCursorAndRatelimit?.beatmapsets!
       );
+      setFetchedBeatmapsetsCount((x) => x + 50);
+      setBeatmapDbOverlapCount(beatmapsetsWithCursorAndRatelimit.overlapCount);
       if (beatmapsetsWithCursorAndRatelimit?.ratelimitRemaining < 100) {
         await new Promise((r) => setTimeout(r, 60000));
       }
@@ -117,7 +127,7 @@ const AdminPanelPage = (props: {
       const promiseArray: Promise<any>[] = [];
       beatmapsSlice.forEach((beatmap) => {
         promiseArray.push(
-          getUserScoreOnBeatmap(
+          getAllUserScoresOnBeatmap(
             beatmap.id,
             7552274,
             props.authToken!,
@@ -125,14 +135,22 @@ const AdminPanelPage = (props: {
           )
         );
       });
+
       let results = await Promise.all(promiseArray);
 
       if (results && results[0]) {
         if (results.at(-1).ratelimitRemaining < 100) {
-          await new Promise((r) => setTimeout(r, 10000));
+          await new Promise((r) => setTimeout(r, 15000));
         }
 
-        const resultsScores = results.map((x: any) => x.score!);
+        const resultsScores = results.map((x: any) => {
+          if (!x.scores || !x.scores[0]) return undefined;
+          const score = x.scores?.reduce((maxScore: any, currentScore: any) =>
+            maxScore.score > currentScore.score ? maxScore : currentScore
+          );
+          score["beatmap"] = x.beatmap[0];
+          return score;
+        });
 
         const mapped = mapResponseArrayToUserScoreInfo(
           resultsScores.filter((x) => x !== undefined && x !== null)
@@ -157,9 +175,36 @@ const AdminPanelPage = (props: {
     );
   };
 
+  //DO NOT DELETE
+  const fetchMissingBeatmapsets = async () => {
+    const dupa = await getAllBeatmapsetsNode();
+    // console.log(beatmapsetsIdsArray.filter((x) => dupa?.some((y) => y === x)));
+    // console.log(beatmapsetsIdsArray.filter((x) => !dupa?.some((y) => y === x)));
+    // console.log(beatmapsetsIdsArray);
+
+    // var dupa2 = beatmapsetsIdsArray.filter((x) => !dupa?.some((y) => y === x));
+    //uncomment this to get it working ^^
+    var dupa2: number[] = [];
+    // console.log(dupa2);
+
+    for await (const beatmapsetId of dupa2) {
+      const beatmapsetWithRateLimit: any = await fetchBeatmapsetById(
+        props.authToken!,
+        beatmapsetId
+      );
+      await insertBeatmapsetIntoNode(beatmapsetWithRateLimit?.beatmapset!);
+      setFetchedBeatmapsetsCount((x) => x + 1);
+      setBeatmapsToFetchCount(dupa2.length);
+      if (beatmapsetWithRateLimit?.ratelimitRemaining < 100) {
+        await new Promise((r) => setTimeout(r, 60000));
+      }
+    }
+  };
+
   return (
     <div className="admin-panel">
       <p>ADMIN PANEL</p>
+      {/* <button onClick={fetchMissingBeatmapsets}>ASDASDASD</button> */}
       {code === null || true ? <a href={authUrl}>AUTHORIZE</a> : null}
       <div className="main-page_menu-wrapper">
         <div className="main-page_menu-element">
@@ -177,16 +222,7 @@ const AdminPanelPage = (props: {
             name="userId"
             ref={userIdRef}
           ></input>
-          <button
-            disabled={props.authToken === undefined}
-            onClick={fetchUserScoresAndUpload}
-          >
-            Confirm
-          </button>
-        </div>
-
-        <div className="main-page_menu-element">
-          <label htmlFor="beatmapYear">Beatmaps For Year</label>
+          <label htmlFor="beatmapYear">Scores For Year</label>
           <input
             disabled={props.authToken === undefined}
             name="beatmapYear"
@@ -197,9 +233,18 @@ const AdminPanelPage = (props: {
           ></input>
           <button
             disabled={props.authToken === undefined}
-            onClick={fetchAndUploadBeatmapsDateAsc}
+            onClick={fetchUserScoresAndUpload}
           >
             Confirm
+          </button>
+        </div>
+
+        <div className="main-page_menu-element">
+          <button
+            disabled={props.authToken === undefined}
+            onClick={fetchAndUploadBeatmapsDateAsc}
+          >
+            Fetch new beatmapsets from osu site
           </button>
         </div>
         <div className="main-page_menu-element">
@@ -257,6 +302,12 @@ const AdminPanelPage = (props: {
             Checked {checkedBeatmapCount} out of {beatmapCountToCheck} beatmaps.
             Estimated time remaining:{" "}
             {(beatmapCountToCheck - checkedBeatmapCount) / 800} minutes.
+          </p>
+          <p>
+            Fetched {fetchedBeatmapsetsCount}/
+            {beatmapsToFetchCount === 0 ? "?" : beatmapCountToCheck}{" "}
+            beatmapsets... (Overlap with database entries:{" "}
+            {beatmapDbOverlapCount})
           </p>
         </div>
       </div>

@@ -1,31 +1,6 @@
 import { IAuthToken } from "../interfaces/IAuthToken";
 import { IUserScoreInfo } from "../interfaces/IUserScoreInfo";
 
-// export const getUserScoreTest = async (authToken: IAuthToken) => {
-//   try {
-//     let resp = await fetch(
-//       "https://corsproxy.io/?" +
-//         encodeURIComponent(
-//           "https://osu.ppy.sh/api/v2/users/2163544/scores/recent?mode=osu&limit=100&offset=0"
-//         ),
-//       {
-//         method: "GET",
-//         headers: {
-//           Accept: "application/json",
-//           "Content-Type": "application/json",
-//           Authorization: `Bearer ${authToken.access_token}`,
-//         },
-//       }
-//     );
-//     if (resp.ok) {
-//       const respJson = await resp.json();
-//       return respJson;
-//     }
-//   } catch (err) {
-//     console.log("CANT GET USER SCORES FROM OSU WEBSITE");
-//   }
-// };
-
 export const getUserScoresNode = async (userId: number, gamemode: string) => {
   try {
     let resp = await fetch(
@@ -127,5 +102,36 @@ export const getUserCompletionNode = async (
     }
   } catch (err) {
     console.log("CANT FETCH USER COMPLETION FROM NODE");
+  }
+};
+
+export const getAllUserScoresOnBeatmap = async (
+  beatmapId: number,
+  userId: number,
+  authToken: IAuthToken,
+  gamemode: string
+) => {
+  try {
+    let resp = await fetch(
+      `http://localhost:21727/getAllUserScoresOnBeatmap?authTokenString=${authToken.access_token}&beatmapId=${beatmapId}&userId=${userId}&gamemode=${gamemode}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken.access_token}`,
+        },
+      }
+    );
+    if (resp.ok) {
+      const respJson = await resp.json();
+      return {
+        scores: respJson.response.scores,
+        beatmap: respJson.response.beatmap,
+        ratelimitRemaining: respJson.ratelimitRemaining,
+      };
+    }
+  } catch (err) {
+    console.log("CANT FETCH BEATMAPS FROM OSU WEBSITE");
   }
 };

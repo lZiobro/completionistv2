@@ -4,10 +4,20 @@ import { IUserScoreInfo } from "../../interfaces/IUserScoreInfo";
 import { IBeatmapInfo } from "../../interfaces/IBeatmapInfo";
 import { IUserScoreView } from "../../interfaces/IUserScoreView";
 import { IBeatmapsetView } from "../../interfaces/IBeatmapsetView";
-import { getUserScoresOnBeatmapsNode } from "../../service/UserService";
-import { getBeatmapsetsNode } from "../../service/BeatmapsService";
+import {
+  getAllUserScoresOnBeatmap,
+  getUserScoresOnBeatmapsNode,
+} from "../../service/UserService";
+import {
+  fetchBeatmapsetById,
+  getBeatmapsetsNode,
+  insertBeatmapsetIntoNode,
+} from "../../service/BeatmapsService";
+import { IAuthToken } from "../../interfaces/IAuthToken";
+import { IBeatmapView } from "../../interfaces/IBeatmapView";
+import { mapResponseArrayToUserScoreInfo } from "../../mappers/UserScoreMapper";
 
-const MainPage = () => {
+const MainPage = (props: { authToken: IAuthToken | undefined }) => {
   const [beatmapsets, setBeatmapsets] = useState<IBeatmapsetView[] | undefined>(
     undefined
   );
@@ -24,8 +34,8 @@ const MainPage = () => {
 
   //update maps with scores from user
   const setUserScoresOnBeatmaps = (
-    userScores: IUserScoreInfo[],
-    beatmapsets: IBeatmapsetInfo[]
+    userScores: IUserScoreView[],
+    beatmapsets: IBeatmapsetView[]
   ) => {
     if (userScores === undefined) return;
     const beatmapsetsUpdated = beatmapsets.map((beatmapset) =>
@@ -35,8 +45,8 @@ const MainPage = () => {
   };
 
   const checkForUserScoreOnMapSet = (
-    userScores: IUserScoreInfo[],
-    beatmapset: IBeatmapsetInfo
+    userScores: IUserScoreView[],
+    beatmapset: IBeatmapsetView
   ) => {
     const diffCount = beatmapset.beatmaps.length;
     let completedDiffs = 0;
@@ -60,7 +70,7 @@ const MainPage = () => {
     return beatmapset;
   };
 
-  const fetchUserScores = async (beatmapsets: IBeatmapsetInfo[]) => {
+  const fetchUserScores = async (beatmapsets: IBeatmapsetView[]) => {
     const userId =
       userIdRef.current.value === "" ? 2163544 : userIdRef.current.value;
 
@@ -68,7 +78,10 @@ const MainPage = () => {
       return beatmapset.beatmaps;
     });
 
-    let beatmaps2: IBeatmapInfo[] = Array.prototype.concat.apply([], beatmaps!);
+    let beatmaps2: IBeatmapsetView[] = Array.prototype.concat.apply(
+      [],
+      beatmaps!
+    );
 
     const userScores = await getUserScoresOnBeatmapsNode(
       userId,
@@ -158,6 +171,50 @@ const MainPage = () => {
         element.classList.add("make-row-visible");
       }
     });
+  };
+
+  const checkUserScoreOnBeatmapset = async (
+    beatmapsToCheck: IBeatmapView[]
+  ) => {
+    if (!props.authToken) {
+      alert("Authorize first!");
+      return;
+    }
+
+    const results: any[] = [];
+    for await (const bm of beatmapsToCheck) {
+      results.push(
+        await getAllUserScoresOnBeatmap(
+          bm.id,
+          userIdRef.current.value ?? 7552274,
+          props.authToken!,
+          selectedGamemode
+        )
+      );
+    }
+
+    const resultsScores = results.map((x: any) => {
+      if (!x.scores || !x.scores[0]) return undefined;
+      const score = x.scores?.reduce((maxScore: any, currentScore: any) =>
+        maxScore.score > currentScore.score ? maxScore : currentScore
+      );
+      score["beatmap"] = x.beatmap[0];
+      return score;
+    });
+
+    const mapped = mapResponseArrayToUserScoreInfo(
+      resultsScores.filter((x) => x !== undefined && x !== null)
+    );
+    await fetch("http://localhost:21727/insertUserScores", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(mapped),
+    });
+
+    await fetchBeatmapsForYear();
   };
 
   return (
@@ -254,6 +311,8 @@ const MainPage = () => {
             <td>Completion</td>
             <td>Ranked date</td>
             <td>Download link</td>
+            <td>Direct</td>
+            <td>Check Beatmapset</td>
           </tr>
         </thead>
         <tbody>
@@ -287,9 +346,22 @@ const MainPage = () => {
                     Download
                   </a>
                 </td>
+                <td>
+                  <a href={`osu://b/${x.id}`} target="_blank">
+                    Direct
+                  </a>
+                </td>
+                <td>
+                  <button
+                    onClick={(e) => checkUserScoreOnBeatmapset(x.beatmaps)}
+                    style={{ width: "100%" }}
+                  >
+                    Check
+                  </button>
+                </td>
               </tr>
               <tr className={"hidden-row hidden-row-" + x.id}>
-                <td colSpan={4}>
+                <td colSpan={6}>
                   <table>
                     <thead>
                       <tr>
