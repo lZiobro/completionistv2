@@ -4,7 +4,7 @@ import { IUserScoreInfo } from "../interfaces/IUserScoreInfo";
 export const getUserScoresNode = async (userId: number, gamemode: string) => {
   try {
     let resp = await fetch(
-      `http://localhost:21727/getAllUserScores?userId=${userId}&gamemode=${gamemode}`,
+      `${process.env.REACT_APP_BASE_API_URL}/getAllUserScores?userId=${userId}&gamemode=${gamemode}`,
       {
         method: "GET",
         headers: {
@@ -29,7 +29,7 @@ export const getUserScoresOnBeatmapsNode = async (
 ) => {
   try {
     let resp = await fetch(
-      `http://localhost:21727/getUserScoresOnBeatmaps?userId=${userId}&gamemode=${gamemode}`,
+      `${process.env.REACT_APP_BASE_API_URL}/getUserScoresOnBeatmaps?userId=${userId}&gamemode=${gamemode}`,
       {
         method: "POST",
         headers: {
@@ -56,7 +56,7 @@ export const getUserScoreOnBeatmap = async (
 ) => {
   try {
     let resp = await fetch(
-      `http://localhost:21727/getUserScoreOnBeatmap?authTokenString=${authToken.access_token}&beatmapId=${beatmapId}&userId=${userId}&gamemode=${gamemode}`,
+      `${process.env.REACT_APP_BASE_API_URL}/getUserScoreOnBeatmap?authTokenString=${authToken.access_token}&beatmapId=${beatmapId}&userId=${userId}&gamemode=${gamemode}`,
       {
         method: "GET",
         headers: {
@@ -85,7 +85,9 @@ export const getUserCompletionNode = async (
 ) => {
   try {
     let resp = await fetch(
-      `http://localhost:21727/getUserCompletion?userId=${userId}&gamemode=${gamemode}&convertsOnly=${
+      `${
+        process.env.REACT_APP_BASE_API_URL
+      }/getUserCompletion?userId=${userId}&gamemode=${gamemode}&convertsOnly=${
         convertsOnly ? "true" : "false"
       }`,
       {
@@ -113,7 +115,7 @@ export const getAllUserScoresOnBeatmap = async (
 ) => {
   try {
     let resp = await fetch(
-      `http://localhost:21727/getAllUserScoresOnBeatmap?authTokenString=${authToken.access_token}&beatmapId=${beatmapId}&userId=${userId}&gamemode=${gamemode}`,
+      `${process.env.REACT_APP_BASE_API_URL}/getAllUserScoresOnBeatmap?authTokenString=${authToken.access_token}&beatmapId=${beatmapId}&userId=${userId}&gamemode=${gamemode}`,
       {
         method: "GET",
         headers: {

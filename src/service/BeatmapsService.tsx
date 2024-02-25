@@ -12,7 +12,7 @@ export const getBeatmapsets = async (
 ) => {
   try {
     let resp = await fetch(
-      `http://localhost:21727/getBeatmapsets?authTokenString=${authToken.access_token}&cursorString=${cursor_string}`,
+      `${process.env.REACT_APP_BASE_API_URL}/getBeatmapsets?authTokenString=${authToken.access_token}&cursorString=${cursor_string}`,
       {
         method: "GET",
         headers: {
@@ -31,6 +31,7 @@ export const getBeatmapsets = async (
         cursor_string: respJson.response.cursor_string,
         ratelimitRemaining: respJson.ratelimitRemaining,
         overlapCount: respJson.overlapCount,
+        totalMaps: respJson.response?.total,
       };
     }
   } catch (err) {
@@ -44,7 +45,7 @@ export const fetchBeatmapsetById = async (
 ) => {
   try {
     let resp = await fetch(
-      `http://localhost:21727/fetchBeatmapsetById?authTokenString=${authToken.access_token}&beatmapsetId=${beatmapsetId}`,
+      `${process.env.REACT_APP_BASE_API_URL}/fetchBeatmapsetById?authTokenString=${authToken.access_token}&beatmapsetId=${beatmapsetId}`,
       {
         method: "GET",
         headers: {
@@ -69,7 +70,7 @@ export const fetchBeatmapsetById = async (
 export const insertBeatmapsetsIntoNode = async (
   beatmapsets: IBeatmapsetInfo[]
 ) => {
-  await fetch("http://localhost:21727/insertBeatmapsets", {
+  await fetch(`${process.env.REACT_APP_BASE_API_URL}/insertBeatmapsets`, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -82,7 +83,7 @@ export const insertBeatmapsetsIntoNode = async (
 export const insertBeatmapsetIntoNode = async (
   beatmapsets: IBeatmapsetInfo[]
 ) => {
-  await fetch("http://localhost:21727/insertBeatmapset", {
+  await fetch(`${process.env.REACT_APP_BASE_API_URL}/insertBeatmapset`, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -99,7 +100,9 @@ export const getBeatmapsetsNode = async (
 ) => {
   try {
     let resp = await fetch(
-      `http://localhost:21727/getBeatmapsetsForYear?year=${year}${
+      `${
+        process.env.REACT_APP_BASE_API_URL
+      }/getBeatmapsetsForYear?year=${year}${
         month !== null ? `&month=${month}` : ""
       }${selectedGamemode !== null ? `&gamemode=${selectedGamemode}` : ""}`,
       {
@@ -122,7 +125,7 @@ export const getBeatmapsetsNode = async (
 export const getAllBeatmapsetsNode = async () => {
   try {
     let resp = await fetch(
-      `http://localhost:21727/getAllBeatmapsetsIdsFromDb`,
+      `${process.env.REACT_APP_BASE_API_URL}/getAllBeatmapsetsIdsFromDb`,
       {
         method: "GET",
         headers: {
@@ -146,8 +149,8 @@ export const getAllBeatmapsNode = async (
   try {
     let resp = await fetch(
       selectedGamemode
-        ? `http://localhost:21727/getBeatmapsetsForYear?gamemode=${selectedGamemode}`
-        : `http://localhost:21727/getBeatmapsetsForYear?`,
+        ? `${process.env.REACT_APP_BASE_API_URL}/getBeatmapsetsForYear?gamemode=${selectedGamemode}`
+        : `${process.env.REACT_APP_BASE_API_URL}/getBeatmapsetsForYear?`,
       {
         method: "GET",
         headers: {

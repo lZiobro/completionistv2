@@ -23,7 +23,10 @@ const AdminPanelPage = (props: {
   setAuthToken: Function;
 }) => {
   const [authUrl, setAuthUrl] = useState<string>(
-    "https://osu.ppy.sh/oauth/authorize?client_id=30207&redirect_uri=http://localhost:3000&response_type=code&scope=public"
+    `https://osu.ppy.sh/oauth/authorize?client_id=30207&redirect_uri=${window.location.href.slice(
+      0,
+      window.location.href.lastIndexOf("/")
+    )}&response_type=code&scope=public`
   );
 
   const [code, setCode] = useState<string | null>("");
@@ -38,6 +41,13 @@ const AdminPanelPage = (props: {
   const [fetchedBeatmapsetsCount, setFetchedBeatmapsetsCount] =
     useState<number>(0);
   const [convertsOnly, setConvertsOnly] = useState<boolean>(false);
+  const [
+    autoStopFetchingBeatmapsOnConsecutiveOverlap,
+    setAutoStopFetchingBeatmapsOnConsecutiveOverlap,
+  ] = useState<boolean>(true);
+
+  const [autoStopTextVisible, setAutoStopTextVisible] =
+    useState<boolean>(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -46,9 +56,14 @@ const AdminPanelPage = (props: {
   }, []);
 
   const fetchAuthToken = async () => {
-    props.setAuthToken(await getAuth(code!));
-    const searchParams = new URLSearchParams(window.location.search);
-    searchParams.delete("code");
+    const auth = await getAuth(code!);
+    if (auth) {
+      props.setAuthToken(auth);
+      const searchParams = new URLSearchParams(window.location.search);
+      searchParams.delete("code");
+    } else {
+      alert("cant authorize!");
+    }
   };
 
   const fetchBeatmapsForYearFromOsuWebDateAsc = async (
@@ -63,25 +78,55 @@ const AdminPanelPage = (props: {
 
   const fetchAndUploadBeatmapsDateAsc = async () => {
     let cursor = null;
+    let totalMaps = 0;
+    let fetchedMaps = 0;
+    let consecutiveOverlaps = 0;
+
+    setAutoStopTextVisible(false);
     while (true) {
       const beatmapsetsWithCursorAndRatelimit: any =
         await fetchBeatmapsForYearFromOsuWebDateAsc(cursor);
       await insertBeatmapsetsIntoNode(
         beatmapsetsWithCursorAndRatelimit?.beatmapsets!
       );
-      setFetchedBeatmapsetsCount((x) => x + 50);
+      if (cursor === null) {
+        setBeatmapsToFetchCount(beatmapsetsWithCursorAndRatelimit.totalMaps);
+        totalMaps = beatmapsetsWithCursorAndRatelimit.totalMaps;
+      }
+      fetchedMaps += 50;
+      setFetchedBeatmapsetsCount(fetchedMaps);
       setBeatmapDbOverlapCount(beatmapsetsWithCursorAndRatelimit.overlapCount);
+      if (beatmapsetsWithCursorAndRatelimit.overlapCount === 50) {
+        consecutiveOverlaps += 1;
+      } else {
+        consecutiveOverlaps = 0;
+      }
       if (beatmapsetsWithCursorAndRatelimit?.ratelimitRemaining < 100) {
         await new Promise((r) => setTimeout(r, 60000));
       }
       cursor = beatmapsetsWithCursorAndRatelimit?.cursor_string;
 
       const selectedYear = new Date(`${beatmapsYear! + 1}-01-01T00:00:00.000`);
+
       if (
         beatmapsetsWithCursorAndRatelimit?.beatmapsets.some(
           (x: any) => new Date(x.ranked_date) >= selectedYear
         )
       ) {
+        return;
+      }
+
+      // console.log(fetchedMaps);
+      // console.log(totalMaps);
+
+      if (fetchedMaps > totalMaps + 200) {
+        return;
+      }
+      if (
+        autoStopFetchingBeatmapsOnConsecutiveOverlap &&
+        consecutiveOverlaps > 9
+      ) {
+        setAutoStopTextVisible(true);
         return;
       }
     }
@@ -93,7 +138,11 @@ const AdminPanelPage = (props: {
     }
     let beatmapsets: any[] | undefined = [];
     if (beatmapsYear) {
-      beatmapsets = await fetchBeatmapsForYear(beatmapsYear);
+      beatmapsets = await getBeatmapsetsNode(
+        beatmapsYear!,
+        null,
+        convertsOnly ? "osu" : selectedGamemode
+      );
     } else {
       beatmapsets = await getAllBeatmapsNode(
         convertsOnly ? "osu" : selectedGamemode
@@ -155,7 +204,7 @@ const AdminPanelPage = (props: {
         const mapped = mapResponseArrayToUserScoreInfo(
           resultsScores.filter((x) => x !== undefined && x !== null)
         );
-        await fetch("http://localhost:21727/insertUserScores", {
+        await fetch(`${process.env.REACT_APP_BASE_API_URL}/insertUserScores`, {
           method: "POST",
           headers: {
             Accept: "application/json",
@@ -169,11 +218,11 @@ const AdminPanelPage = (props: {
     }
   };
 
-  const fetchBeatmapsForYear = async (beatmapsYear: number) => {
-    return await getBeatmapsetsNode(
-      Number.isNaN(beatmapsYear) ? 2007 : beatmapsYear!
-    );
-  };
+  // const fetchBeatmapsForYear = async (beatmapsYear: number) => {
+  //   return await getBeatmapsetsNode(
+  //     Number.isNaN(beatmapsYear) ? 2007 : beatmapsYear!
+  //   );
+  // };
 
   //DO NOT DELETE
   const fetchMissingBeatmapsets = async () => {
@@ -303,11 +352,30 @@ const AdminPanelPage = (props: {
             Estimated time remaining:{" "}
             {(beatmapCountToCheck - checkedBeatmapCount) / 800} minutes.
           </p>
+          <label htmlFor="autoStopBeatmapFetch">
+            Automatically stop fetching beatmaps on 10 consecutive overlaps
+          </label>
+          <input
+            name="autoStopBeatmapFetch"
+            type="checkbox"
+            checked={autoStopFetchingBeatmapsOnConsecutiveOverlap}
+            onClick={() => {
+              setAutoStopFetchingBeatmapsOnConsecutiveOverlap(
+                !autoStopFetchingBeatmapsOnConsecutiveOverlap
+              );
+            }}
+          />
           <p>
             Fetched {fetchedBeatmapsetsCount}/
-            {beatmapsToFetchCount === 0 ? "?" : beatmapCountToCheck}{" "}
+            {beatmapsToFetchCount === 0 ? "?" : beatmapsToFetchCount}{" "}
             beatmapsets... (Overlap with database entries:{" "}
             {beatmapDbOverlapCount})
+            <br />
+            {autoStopTextVisible && (
+              <span>
+                Auto stopped fetching due to 10 consecutive overlap count!
+              </span>
+            )}
           </p>
         </div>
       </div>

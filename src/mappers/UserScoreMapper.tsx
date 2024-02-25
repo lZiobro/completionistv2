@@ -52,6 +52,7 @@ export const mapResponseToUserScoreView = (response: any) => {
     created_at: response.created_at,
     id: response.id,
     mods: response.mods,
+    score: response.score,
   };
   return result;
 };

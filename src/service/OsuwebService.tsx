@@ -5,7 +5,7 @@ export const getAuth = async (code: string) => {
     const dupa = window.location.href;
     const dupa2 = dupa.slice(0, dupa.lastIndexOf("/"));
     let resp = await fetch(
-      `http://localhost:21727/getToken?code=${code}&returnUrl=${dupa2}`,
+      `${process.env.REACT_APP_BASE_API_URL}/getToken?code=${code}&returnUrl=${dupa2}`,
       {
         method: "GET",
       }

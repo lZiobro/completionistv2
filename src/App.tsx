@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import logo from "./logo.svg";
+import { useState } from "react";
 import "./App.css";
 import MainPage from "./pages/main/MainPage";
 import AdminPanelPage from "./pages/main/AdminPanelPage";
@@ -8,6 +7,7 @@ import UserStatistics from "./pages/main/UserStatistics";
 
 function App() {
   const [authToken, setAuthToken] = useState<IAuthToken | undefined>(undefined);
+
   return (
     <div className="App">
       <AdminPanelPage authToken={authToken} setAuthToken={setAuthToken} />

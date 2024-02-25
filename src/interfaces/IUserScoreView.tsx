@@ -7,4 +7,5 @@ export interface IUserScoreView {
   beatmap_id: number; //int
   rank: string;
   statistics_count_miss: number; //integer
+  score: number; //BigInt
 }

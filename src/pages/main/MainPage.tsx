@@ -205,7 +205,7 @@ const MainPage = (props: { authToken: IAuthToken | undefined }) => {
     const mapped = mapResponseArrayToUserScoreInfo(
       resultsScores.filter((x) => x !== undefined && x !== null)
     );
-    await fetch("http://localhost:21727/insertUserScores", {
+    await fetch(`${process.env.REACT_APP_BASE_API_URL}/insertUserScores`, {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -376,9 +376,15 @@ const MainPage = (props: { authToken: IAuthToken | undefined }) => {
                     </thead>
                     <tbody>
                       {x.beatmaps?.map((y) => {
-                        const userScore = userScores?.find(
+                        const userScoresMap = userScores?.filter(
                           (score) => score.beatmap_id === y.id
                         )!;
+                        let userScore: IUserScoreView = {} as IUserScoreView;
+                        if (userScoresMap && userScoresMap[0]) {
+                          userScore = userScoresMap?.reduce((max, score) =>
+                            max.score > score.score ? max : score
+                          );
+                        }
                         return (
                           <tr
                             key={y.id}
