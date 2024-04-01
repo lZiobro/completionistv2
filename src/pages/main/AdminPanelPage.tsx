@@ -16,11 +16,16 @@ import {
 } from "../../service/UserService";
 import { mapResponseArrayToUserScoreInfo } from "../../mappers/UserScoreMapper";
 import { IBeatmapInfo } from "../../interfaces/IBeatmapInfo";
+import CsvFileParser from "../../tools/csvFileParser";
+import { IUserScoreImport } from "../../interfaces/IScoreImport";
+import HowToUseAdminModal from "../modals/Modal";
+import Modal from "../modals/Modal";
 import { beatmapsetsIdsArray } from "../../misc/beatmapsetsList";
 
 const AdminPanelPage = (props: {
   authToken: IAuthToken | undefined;
   setAuthToken: Function;
+  userId: number | undefined;
 }) => {
   const [authUrl, setAuthUrl] = useState<string>(
     `https://osu.ppy.sh/oauth/authorize?client_id=30207&redirect_uri=${window.location.href.slice(
@@ -45,14 +50,26 @@ const AdminPanelPage = (props: {
     autoStopFetchingBeatmapsOnConsecutiveOverlap,
     setAutoStopFetchingBeatmapsOnConsecutiveOverlap,
   ] = useState<boolean>(true);
+  const [fetchingPanelVisible, setFetchingPanelVisible] =
+    useState<boolean>(false);
 
   const [autoStopTextVisible, setAutoStopTextVisible] =
     useState<boolean>(false);
+  const [scoresImportResult, setScoresImportResult] = useState<
+    IUserScoreImport[]
+  >([] as IUserScoreImport[]);
+  const [showHelp, setShowHelp] = useState<boolean>(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const code = searchParams.get("code");
     setCode(code);
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "p") {
+        console.log("dupa");
+        setFetchingPanelVisible(true);
+      }
+    });
   }, []);
 
   const fetchAuthToken = async () => {
@@ -156,8 +173,7 @@ const AdminPanelPage = (props: {
     let beatmaps2: IBeatmapInfo[] = Array.prototype.concat.apply([], beatmaps!);
 
     if (unplayedOnly) {
-      const userId =
-        userIdRef.current.value === "" ? 2163544 : userIdRef.current.value;
+      const userId = userIdRef.current.value;
       const userScores = await getUserScoresNode(userId, selectedGamemode);
 
       beatmaps2 = beatmaps2?.filter(
@@ -172,25 +188,47 @@ const AdminPanelPage = (props: {
       beatmaps3.push(beatmaps2.splice(0, 20));
     }
     let count = 0;
-    for await (const beatmapsSlice of beatmaps3!) {
-      const promiseArray: Promise<any>[] = [];
-      beatmapsSlice.forEach((beatmap) => {
-        promiseArray.push(
-          getAllUserScoresOnBeatmap(
-            beatmap.id,
-            7552274,
-            props.authToken!,
-            selectedGamemode
-          )
-        );
-      });
-
-      let results = await Promise.all(promiseArray);
-
-      if (results && results[0]) {
-        if (results.at(-1).ratelimitRemaining < 100) {
-          await new Promise((r) => setTimeout(r, 15000));
+    for (let i = 0; i < beatmaps3.length; i++) {
+      const beatmapsSlice = beatmaps3[i];
+      const bodyShit = {
+        userId: userIdRef.current.value,
+        authTokenString: props.authToken?.access_token,
+        gamemode: selectedGamemode ?? "osu",
+        beatmapsIds: beatmapsSlice.map((x) => x.id),
+      };
+      const fetchResult: any = await fetch(
+        `${process.env.REACT_APP_BASE_API_URL}/fetchUserScoresOnBeatmaps`,
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bodyShit),
         }
+      );
+
+      const fetchResultsJson = await fetchResult.json();
+
+      if (
+        fetchResultsJson &&
+        fetchResultsJson.results &&
+        fetchResultsJson.results[0]
+      ) {
+        if (fetchResultsJson.rateLimitRemaining === -1) {
+          //repeat this iteration
+          i--;
+          continue;
+        }
+        if (fetchResultsJson.ratelimitRemaining < 30) {
+          await new Promise((r) => setTimeout(r, 20000));
+        } else if (fetchResultsJson.ratelimitRemaining < 100) {
+          await new Promise((r) => setTimeout(r, 10000));
+        } else if (fetchResultsJson.ratelimitRemaining < 200) {
+          await new Promise((r) => setTimeout(r, 2000));
+        }
+
+        const results = fetchResultsJson.results;
 
         const resultsScores = results.map((x: any) => {
           if (!x.scores || !x.scores[0]) return undefined;
@@ -202,7 +240,7 @@ const AdminPanelPage = (props: {
         });
 
         const mapped = mapResponseArrayToUserScoreInfo(
-          resultsScores.filter((x) => x !== undefined && x !== null)
+          resultsScores.filter((x: any) => x !== undefined && x !== null)
         );
         await fetch(`${process.env.REACT_APP_BASE_API_URL}/insertUserScores`, {
           method: "POST",
@@ -231,10 +269,9 @@ const AdminPanelPage = (props: {
     // console.log(beatmapsetsIdsArray.filter((x) => !dupa?.some((y) => y === x)));
     // console.log(beatmapsetsIdsArray);
 
-    // var dupa2 = beatmapsetsIdsArray.filter((x) => !dupa?.some((y) => y === x));
-    //uncomment this to get it working ^^
-    var dupa2: number[] = [];
-    // console.log(dupa2);
+    var dupa2 = beatmapsetsIdsArray.filter((x) => !dupa?.some((y) => y === x));
+    //uncomment this to get it working ^^ and comment this \/\/
+    // var dupa2: number[] = [];
 
     for await (const beatmapsetId of dupa2) {
       const beatmapsetWithRateLimit: any = await fetchBeatmapsetById(
@@ -252,7 +289,68 @@ const AdminPanelPage = (props: {
 
   return (
     <div className="admin-panel">
+      {showHelp && (
+        <Modal>
+          {" "}
+          <p>HOW TO USE</p>
+          <p>
+            To do anything, you must authorize your osu account to get to the
+            osu api. <br />
+            To do that, you need to first click "Authorize" text, then make sure
+            your server is running and click the GetAuthToken
+            <br />
+            If everything went well, you are now authenticated and can use osu
+            api \o/
+          </p>
+          <p>
+            <b>
+              TL;DR
+              <br />
+              Authorize =&gt; getAuthToken =&gt; Fetch scores in admin panel
+              <br />
+              (if you leave year empty itll fetch scores for all years)
+              <br />
+              Use the rest of the app as is
+            </b>
+          </p>
+          <p>
+            After authenticating you get access to a few things: <br />
+            1. Fetching scores from osu website <br />
+            1.1 MAKE SURE YOU'VE SELECTED CORRECT GAMEMODE - IF YOU WANT
+            CONVERTS, CHECK THE CONVERTS ONLY <br />
+            1.2 After selecting the gamemode insert your userId and optionally a
+            year from which you want to fetch scores
+            <br />
+            1.3 Your scores for given gamemode is now fetching \o/
+            <br />
+            <br />
+            1.4 The first fetch will probably take a long time (bout 2 hours for
+            std, or some less for other gamemodes)
+            <br />
+            <br />
+            1.4.1 After the initial fetch, you can just check the "unplayed
+            only", which will reduce the amount of time drastically
+            <br />
+            1.4.2 You will see the progress on the label Checked x out of y
+            beatmaps.
+            <br />
+            1.4.3 The scores will be only fetched for the maps in
+            database(should be complete as of 27.02.2024)
+            <br />
+            1.4.4 Soon there will be an option to just fetch scores from the
+            past 24H, which will work instantly most likely
+            <br />
+            1.4.5 You can also check for new scores on the main panel below
+            (white section), but still need to authenticate first.
+          </p>
+          <button onClick={() => setShowHelp(false)}>CLOSE</button>
+        </Modal>
+      )}
       <p>ADMIN PANEL</p>
+      <button onClick={() => setShowHelp(true)}>HOW TO USE</button>
+      <br />
+      <br />
+      {/* <CsvFileParser setResult={setScoresImportResult} /> */}
       {/* <button onClick={fetchMissingBeatmapsets}>ASDASDASD</button> */}
       {code === null || true ? <a href={authUrl}>AUTHORIZE</a> : null}
       <div className="main-page_menu-wrapper">
@@ -270,6 +368,7 @@ const AdminPanelPage = (props: {
             disabled={props.authToken === undefined}
             name="userId"
             ref={userIdRef}
+            defaultValue={props.userId}
           ></input>
           <label htmlFor="beatmapYear">Scores For Year</label>
           <input
@@ -279,21 +378,13 @@ const AdminPanelPage = (props: {
               setBeatmapsYear(parseInt(e.target.value));
             }}
             type="numeric"
+            placeholder="(optional)"
           ></input>
           <button
             disabled={props.authToken === undefined}
             onClick={fetchUserScoresAndUpload}
           >
             Confirm
-          </button>
-        </div>
-
-        <div className="main-page_menu-element">
-          <button
-            disabled={props.authToken === undefined}
-            onClick={fetchAndUploadBeatmapsDateAsc}
-          >
-            Fetch new beatmapsets from osu site
           </button>
         </div>
         <div className="main-page_menu-element">
@@ -350,33 +441,47 @@ const AdminPanelPage = (props: {
           <p>
             Checked {checkedBeatmapCount} out of {beatmapCountToCheck} beatmaps.
             Estimated time remaining:{" "}
-            {(beatmapCountToCheck - checkedBeatmapCount) / 800} minutes.
+            {(beatmapCountToCheck - checkedBeatmapCount) / 1000} minutes.
           </p>
-          <label htmlFor="autoStopBeatmapFetch">
-            Automatically stop fetching beatmaps on 10 consecutive overlaps
-          </label>
-          <input
-            name="autoStopBeatmapFetch"
-            type="checkbox"
-            checked={autoStopFetchingBeatmapsOnConsecutiveOverlap}
-            onClick={() => {
-              setAutoStopFetchingBeatmapsOnConsecutiveOverlap(
-                !autoStopFetchingBeatmapsOnConsecutiveOverlap
-              );
-            }}
-          />
-          <p>
-            Fetched {fetchedBeatmapsetsCount}/
-            {beatmapsToFetchCount === 0 ? "?" : beatmapsToFetchCount}{" "}
-            beatmapsets... (Overlap with database entries:{" "}
-            {beatmapDbOverlapCount})
-            <br />
-            {autoStopTextVisible && (
-              <span>
-                Auto stopped fetching due to 10 consecutive overlap count!
-              </span>
-            )}
-          </p>
+          {fetchingPanelVisible && (
+            <>
+              <div className="main-page_menu-element">
+                <button
+                  disabled={props.authToken === undefined}
+                  onClick={fetchAndUploadBeatmapsDateAsc}
+                >
+                  Fetch new beatmapsets from osu site
+                </button>
+              </div>
+              <p>
+                Fetched {fetchedBeatmapsetsCount}/
+                {beatmapsToFetchCount === 0 ? "?" : beatmapsToFetchCount}{" "}
+                beatmapsets... (Overlap with database entries:{" "}
+                {beatmapDbOverlapCount})
+                <br />
+                <label htmlFor="autoStopBeatmapFetch">
+                  Automatically stop fetching beatmaps on 10 consecutive
+                  overlaps
+                </label>
+                <input
+                  name="autoStopBeatmapFetch"
+                  type="checkbox"
+                  checked={autoStopFetchingBeatmapsOnConsecutiveOverlap}
+                  onClick={() => {
+                    setAutoStopFetchingBeatmapsOnConsecutiveOverlap(
+                      !autoStopFetchingBeatmapsOnConsecutiveOverlap
+                    );
+                  }}
+                />
+                <br />
+                {autoStopTextVisible && (
+                  <span>
+                    Auto stopped fetching due to 10 consecutive overlap count!
+                  </span>
+                )}
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>

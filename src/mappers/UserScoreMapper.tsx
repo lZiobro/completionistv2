@@ -1,3 +1,4 @@
+import { IUserScoreImport } from "../interfaces/IScoreImport";
 import { IUserScoreInfo } from "../interfaces/IUserScoreInfo";
 import { IUserScoreView } from "../interfaces/IUserScoreView";
 
@@ -63,3 +64,45 @@ export const mapResponseArrayToUserScoreView = (responseArray: any) => {
   });
   return resultArray;
 };
+
+// export const mapResponseToUserScoreImport = (response: any) => {
+//   const result: IUserScoreImport = {
+//     accuracy: response.accuracy,
+//     artist: response.artist,
+//     beatmap_id: response.beatmap_id,
+//     beatmapset_id: response.set_id,
+//     created_at: response.date_played,
+//     id:
+//       parseInt(response.beatmap_id) +
+//       parseInt(response.user_id) +
+//       1000000000000000,
+//     max_combo: response.maxcombo,
+//     mode: "osu", //for now we can hardcode osu there for easier access
+//     mode_int: response.mode,
+//     mods: response.mods,
+//     passed: response.passed,
+//     perfect: response.perfect,
+//     pp: response.pp,
+//     rank: response.rank,
+//     replay: response.replay,
+//     score: response.score,
+//     statistics_count_100: response.statistics.count_100,
+//     statistics_count_300: response.statistics.count_300,
+//     statistics_count_50: response.statistics.count_50,
+//     statistics_count_geki: response.statistics.count_geki,
+//     statistics_count_katu: response.statistics.count_katu,
+//     statistics_count_miss: response.statistics.count_miss,
+//     table: response.table,
+//     type: response.type,
+//     username: response.user?.username,
+//     user_id: response.user_id,
+//   };
+//   return result;
+// };
+
+// export const mapResponseArrayToUserScoreImport = (responseArray: any) => {
+//   const resultArray: IUserScoreImport[] = responseArray.map((response: any) => {
+//     return mapResponseToUserScoreImport(response);
+//   });
+//   return resultArray;
+// };

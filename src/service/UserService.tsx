@@ -127,11 +127,41 @@ export const getAllUserScoresOnBeatmap = async (
     );
     if (resp.ok) {
       const respJson = await resp.json();
+      if (respJson.error) {
+        console.log("CANT FETCH BEATMAPS FROM OSU WEBSITE");
+        return { scores: "SC", beatmap: "ABC", rateLimitRemaining: -1 };
+      }
       return {
         scores: respJson.response.scores,
         beatmap: respJson.response.beatmap,
         ratelimitRemaining: respJson.ratelimitRemaining,
       };
+    } else {
+      console.log("CANT FETCH BEATMAPS FROM OSU WEBSITE");
+      return { scores: "SC", beatmap: "ABC", rateLimitRemaining: -1 };
+    }
+  } catch (err) {
+    console.log("CANT FETCH BEATMAPS FROM OSU WEBSITE");
+    return { scores: "SC", beatmap: "ABC", rateLimitRemaining: -1 };
+  }
+};
+
+export const getUserId = async (authToken: IAuthToken) => {
+  try {
+    let resp = await fetch(
+      `${process.env.REACT_APP_BASE_API_URL}/getUserId?authTokenString=${authToken.access_token}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken.access_token}`,
+        },
+      }
+    );
+    if (resp.ok) {
+      const respJson = await resp.json();
+      return respJson;
     }
   } catch (err) {
     console.log("CANT FETCH BEATMAPS FROM OSU WEBSITE");

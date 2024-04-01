@@ -40,3 +40,18 @@
 .user-statistics {
   background-color: deepskyblue;
 }
+
+.modal {
+  position: absolute;
+  max-width: 800px;
+  width: 90%;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  background-color: darkgray;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  overflow-x: scroll;
+}

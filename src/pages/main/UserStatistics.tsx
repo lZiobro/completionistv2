@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { getUserCompletionNode } from "../../service/UserService";
 
-const UserStatistics = () => {
+const UserStatistics = (props: { userId: number | undefined }) => {
   const [userCompletions, setUserCompletions] = useState<any>(null);
   const [selectedGamemode, setSelectedGamemode] = useState<string>("osu");
   const [convertsOnly, setConvertsOnly] = useState<boolean>(false);
@@ -36,7 +36,11 @@ const UserStatistics = () => {
     <div className="user-statistics">
       <div className="main-page_menu-element">
         <label htmlFor="userId">UserId</label>
-        <input name="userId" ref={userIdRef}></input>
+        <input
+          name="userId"
+          ref={userIdRef}
+          defaultValue={props.userId}
+        ></input>
         {/* <button onClick={fetchUserScores}>Confirm</button> */}
       </div>
       <p>Selected gamemode: {selectedGamemode}</p>

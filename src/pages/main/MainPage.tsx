@@ -1,26 +1,25 @@
-import { useRef, useState } from "react";
-import { IBeatmapsetInfo } from "../../interfaces/IBeatmapsetInfo";
-import { IUserScoreInfo } from "../../interfaces/IUserScoreInfo";
-import { IBeatmapInfo } from "../../interfaces/IBeatmapInfo";
+import { useEffect, useRef, useState } from "react";
 import { IUserScoreView } from "../../interfaces/IUserScoreView";
 import { IBeatmapsetView } from "../../interfaces/IBeatmapsetView";
 import {
   getAllUserScoresOnBeatmap,
   getUserScoresOnBeatmapsNode,
 } from "../../service/UserService";
-import {
-  fetchBeatmapsetById,
-  getBeatmapsetsNode,
-  insertBeatmapsetIntoNode,
-} from "../../service/BeatmapsService";
+import { getBeatmapsetsNode } from "../../service/BeatmapsService";
 import { IAuthToken } from "../../interfaces/IAuthToken";
 import { IBeatmapView } from "../../interfaces/IBeatmapView";
 import { mapResponseArrayToUserScoreInfo } from "../../mappers/UserScoreMapper";
 
-const MainPage = (props: { authToken: IAuthToken | undefined }) => {
+const MainPage = (props: {
+  authToken: IAuthToken | undefined;
+  userId: number | undefined;
+}) => {
   const [beatmapsets, setBeatmapsets] = useState<IBeatmapsetView[] | undefined>(
     undefined
   );
+  const [beatmapsetsView, setBeatmapsetsView] = useState<
+    IBeatmapsetView[] | undefined
+  >(undefined);
   const [userScores, setUserScores] = useState<IUserScoreView[] | undefined>(
     undefined
   );
@@ -31,6 +30,9 @@ const MainPage = (props: { authToken: IAuthToken | undefined }) => {
   const [convertsOnly, setConvertsOnly] = useState<boolean>(false);
   const [unplayedOnly, setUnplayedOnly] = useState<boolean>(false);
   const [exportUrl, setExportUrl] = useState<string>("");
+  const [filters, setFilters] = useState<{ [index: string]: string | number }>(
+    {}
+  );
 
   //update maps with scores from user
   const setUserScoresOnBeatmaps = (
@@ -71,8 +73,11 @@ const MainPage = (props: { authToken: IAuthToken | undefined }) => {
   };
 
   const fetchUserScores = async (beatmapsets: IBeatmapsetView[]) => {
-    const userId =
-      userIdRef.current.value === "" ? 2163544 : userIdRef.current.value;
+    const userId = userIdRef.current.value;
+
+    if (!userId) {
+      alert("Set UserId first!");
+    }
 
     const beatmaps = beatmapsets?.map((beatmapset) => {
       return beatmapset.beatmaps;
@@ -123,6 +128,38 @@ const MainPage = (props: { authToken: IAuthToken | undefined }) => {
     setUserScores(userScores!);
     setBeatmapsets(beatmapsets);
   };
+
+  const addCompletionFilter = () => {
+    if (!filters["completion"] && filters["completion"] !== 0) {
+      filters["completion"] = 0;
+    } else if (filters["completion"] === 0) {
+      filters["completion"] = 1;
+    } else if (filters["completion"] === 1) {
+      filters["completion"] = 2;
+    } else {
+      delete filters["completion"];
+    }
+    console.log(filters["completion"]);
+    setFilters({ ...filters });
+  };
+
+  const applyBeatmapsetsFilters = (beatmapsets: IBeatmapsetView[]) => {
+    let beatmapsetsFiltered = beatmapsets;
+    if (filters["completion"] !== undefined) {
+      beatmapsetsFiltered = beatmapsets.filter(
+        (x) => x.completed === filters["completion"]
+      );
+    }
+    return beatmapsetsFiltered;
+  };
+
+  useEffect(() => {
+    console.log("DUPA");
+    if (!beatmapsets || !beatmapsets[0]) {
+      return;
+    }
+    setBeatmapsetsView(applyBeatmapsetsFilters(beatmapsets!));
+  }, [beatmapsets, filters]);
 
   const exportMaps = () => {
     const dupa = beatmapsets?.map((x) =>
@@ -180,13 +217,17 @@ const MainPage = (props: { authToken: IAuthToken | undefined }) => {
       alert("Authorize first!");
       return;
     }
+    if (!userIdRef.current.value) {
+      alert("Set UserId first!");
+      return;
+    }
 
     const results: any[] = [];
     for await (const bm of beatmapsToCheck) {
       results.push(
         await getAllUserScoresOnBeatmap(
           bm.id,
-          userIdRef.current.value ?? 7552274,
+          userIdRef.current.value,
           props.authToken!,
           selectedGamemode
         )
@@ -233,7 +274,11 @@ const MainPage = (props: { authToken: IAuthToken | undefined }) => {
       <div className="main-page_menu-wrapper">
         <div className="main-page_menu-element">
           <label htmlFor="userId">UserId</label>
-          <input name="userId" ref={userIdRef}></input>
+          <input
+            name="userId"
+            ref={userIdRef}
+            defaultValue={props.userId}
+          ></input>
           {/* <button onClick={fetchUserScores}>Confirm</button> */}
         </div>
 
@@ -249,7 +294,7 @@ const MainPage = (props: { authToken: IAuthToken | undefined }) => {
             name="beatmapMonth"
             ref={beatmapsMonthRef}
             type="numeric"
-            placeholder="month"
+            placeholder="month (optional)"
           />
           <label htmlFor="unplayedOnly">Only unplayed</label>
           <input
@@ -304,11 +349,22 @@ const MainPage = (props: { authToken: IAuthToken | undefined }) => {
           />
         </div>
       </div>
+      <p>You can filter Completion by clicking on the table header</p>
       <table className="beatmap-table">
         <thead>
           <tr>
             <td>Beatmap name</td>
-            <td>Completion</td>
+            <td onClick={addCompletionFilter}>
+              Completion
+              <br />
+              {filters["completion"] !== undefined
+                ? filters["completion"] === 2
+                  ? "[Completed]"
+                  : filters["completion"] === 1
+                  ? "[Partial]"
+                  : "[Unplayed]"
+                : "[Any]"}
+            </td>
             <td>Ranked date</td>
             <td>Download link</td>
             <td>Direct</td>
@@ -316,7 +372,7 @@ const MainPage = (props: { authToken: IAuthToken | undefined }) => {
           </tr>
         </thead>
         <tbody>
-          {beatmapsets?.map((x) => (
+          {beatmapsetsView?.map((x) => (
             <>
               <tr key={x.id} onClick={(e) => handleRowClick(e, x.id)}>
                 <td>
@@ -347,7 +403,12 @@ const MainPage = (props: { authToken: IAuthToken | undefined }) => {
                   </a>
                 </td>
                 <td>
-                  <a href={`osu://b/${x.id}`} target="_blank">
+                  <a
+                    href={`osu://b/${
+                      x.beatmaps && x.beatmaps[0] && x.beatmaps[0].id
+                    }`}
+                    target="_blank"
+                  >
                     Direct
                   </a>
                 </td>
