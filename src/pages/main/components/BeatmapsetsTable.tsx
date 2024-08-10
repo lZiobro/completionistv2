@@ -7,6 +7,7 @@ import {
   getBeatmapsForBeatmapsetNode,
   getFirstBeatmapsetBeatmapIdNode,
 } from "../../../service/BeatmapsService";
+import BeatmapsetsTableRow from "./BeatmapsetsTableRow";
 
 const BeatmapsetsTable = (props: {
   gamemode: string;
@@ -17,36 +18,32 @@ const BeatmapsetsTable = (props: {
   fetchedFull?: boolean;
 }) => {
   const [beatmaps, setBeatmaps] = useState<IBeatmapView[]>([]);
+  const [expandedBeatmapsets, setExpandedBeatmapsets] = useState<
+    IBeatmapsetView[]
+  >([]);
 
-  // useEffect(() => {
-  //   if (!props.beatmapsets || !props.beatmapsets[0]) {
-  //     setBeatmapsetsView([]);
-  //     return;
-  //   }
-  //   setBeatmapsetsView(props.beatmapsets!);
-  // }, [props.beatmapsets]);
+  useEffect(() => {
+    setExpandedBeatmapsets([]);
+  }, [props.beatmapsets]);
 
-  const handleRowClick = async (e: any, beatmapsetId: number) => {
-    var hiddenRows = Array.from(
-      document.getElementsByClassName("hidden-row-" + beatmapsetId)
-    );
-    hiddenRows.forEach((element) => {
-      if (element.classList.contains("make-row-visible")) {
-        element.classList.remove("make-row-visible");
-      } else {
-        element.classList.add("make-row-visible");
-      }
-    });
+  const handleRowClick = async (e: any, beatmapset: IBeatmapsetView) => {
+    if (expandedBeatmapsets?.some((x) => x.id === beatmapset.id)) {
+      setExpandedBeatmapsets(
+        expandedBeatmapsets.filter((x) => x.id !== beatmapset.id)
+      );
+      return;
+    }
     if (
-      !beatmaps.some((x) => x.beatmapset_id === beatmapsetId) &&
-      !props.beatmapsets.find((x) => x.id === beatmapsetId).beatmaps
+      !beatmaps.some((x) => x.beatmapset_id === beatmapset.id) &&
+      !beatmapset.beatmaps
     ) {
       const newBeatmaps = await getBeatmapsForBeatmapsetNode(
-        beatmapsetId,
+        beatmapset.id,
         props.convertsOnly ? "osu" : props.gamemode
       );
       setBeatmaps((beatmaps) => [...beatmaps, ...newBeatmaps!]);
     }
+    setExpandedBeatmapsets([...expandedBeatmapsets, beatmapset]);
   };
 
   const goToBeatmapsetDirect = async (beatmapsetId: number) => {
@@ -58,7 +55,7 @@ const BeatmapsetsTable = (props: {
   };
 
   return (
-    <table className="beatmap-table table-default" style={{ minWidth: "80%" }}>
+    <table className="beatmap-table table-default" style={{ width: "100%" }}>
       <thead>
         <tr>
           <td>Beatmap name</td>
@@ -66,98 +63,20 @@ const BeatmapsetsTable = (props: {
           <td>Ranked date</td>
           <td>Download link</td>
           <td>Direct</td>
-          {/* <td>Check Beatmapset</td> */}
         </tr>
       </thead>
       <tbody>
         {props.beatmapsets?.map((x) => (
-          <>
-            <tr key={x.id} onClick={(e) => handleRowClick(e, x.id)}>
-              <td>
-                {x.artist} - {x.title}
-              </td>
-              <td
-                className={
-                  x.completed === 2
-                    ? "beatmap-table-complete"
-                    : x.completed === 1
-                    ? "beatmap-table-partial"
-                    : "beatmap-table-unplayed"
-                }
-              >
-                {x.completed === 2
-                  ? "Completed"
-                  : x.completed === 1
-                  ? "Partial"
-                  : "Unplayed"}
-              </td>
-              <td>{x.ranked_date}</td>
-              <td>
-                <button
-                  className="btn"
-                  onClick={() =>
-                    window.open(
-                      `https://osu.ppy.sh/beatmapsets/${x.id}/download`,
-                      "_blank"
-                    )
-                  }
-                  style={{
-                    color: "white",
-                    width: "100%",
-                    backgroundColor: `var(--bs-secondary)`,
-                  }}
-                >
-                  Download
-                </button>
-              </td>
-              <td>
-                <button
-                  className="btn"
-                  onClick={() => goToBeatmapsetDirect(x.id)}
-                  style={{
-                    color: "white",
-                    width: "100%",
-                    backgroundColor: `var(--bs-secondary)`,
-                  }}
-                >
-                  Direct
-                </button>
-              </td>
-              {/* <td>
-                <button
-                  className="btn"
-                  onClick={() => checkUserScoreOnBeatmapset(x.beatmaps)}
-                  style={{
-                    color: "white",
-                    width: "100%",
-                    backgroundColor: `var(--bs-secondary)`,
-                  }}
-                >
-                  Check TODO
-                </button>
-              </td> */}
-            </tr>
-            <tr
-              key={`btmap${x.id}`}
-              className={"hidden-row hidden-row-" + x.id}
-            >
-              <td colSpan={6} className="bg-secondary" style={{ padding: 0 }}>
-                <BeatmapTable
-                  beatmaps={
-                    x.beatmaps ??
-                    beatmaps.filter((beatmap) => beatmap.beatmapset_id === x.id)
-                  }
-                  beatmapsetId={x.id}
-                  gamemode={props.gamemode}
-                  userId={props.userId}
-                  userScores={props.userScores?.filter(
-                    (y) => y.beatmapset_id === x.id
-                  )}
-                  fetchScores={!props.fetchedFull}
-                />
-              </td>
-            </tr>
-          </>
+          <BeatmapsetsTableRow
+            beatmapset={x}
+            convertsOnly={props.convertsOnly}
+            gamemode={props.gamemode}
+            userScores={props.userScores?.filter(
+              (y) => y.beatmapset_id === x.id
+            )}
+            userId={props.userId}
+            fetchedFull={props.fetchedFull}
+          />
         ))}
       </tbody>
     </table>
