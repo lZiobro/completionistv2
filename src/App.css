@@ -1,40 +1,5 @@
 .App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .user-statistics {
@@ -42,16 +7,120 @@
 }
 
 .modal {
-  position: absolute;
-  max-width: 800px;
-  width: 90%;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  background-color: darkgray;
+  position: fixed;
+  display: block;
+  background-color: rgba(128, 128, 128, 0.2);
   left: 0;
   right: 0;
   top: 0;
   bottom: 0;
+}
+
+.modal-content {
+  position: absolute;
+  display: block;
+  width: 90%;
+  padding: 20px;
+  background-color: darkgray;
   margin: auto;
-  overflow-x: scroll;
+  left: 0;
+  right: 0;
+}
+
+.no-gutters {
+  padding: 0;
+}
+
+.gamemode-icon {
+  height: 50px;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.gamemode-icon.icon-disabled {
+  cursor: not-allowed;
+}
+
+.yes-no-button {
+  background-color: rgba(128, 128, 128, 0.2);
+  color: white;
+}
+
+.yes-no-button:hover {
+  background-color: rgba(128, 128, 128, 0.2);
+}
+.icon-selected {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.icon-selected:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.dark-table {
+  color: white;
+  background-color: var(--bs-dark);
+}
+
+.dark-table * {
+  color: white;
+}
+
+.dark-table td {
+  padding: 10px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.ss {
+  background-color: #feedad;
+  color: black;
+  font-weight: 700;
+}
+
+.s {
+  background-color: #fcdc5a;
+  color: black;
+  font-weight: 700;
+  border-right-width: 3px;
+}
+
+.a {
+  background-color: forestgreen;
+}
+
+.b {
+  background-color: mediumblue;
+}
+
+.c {
+  background-color: darkorchid;
+}
+
+.d {
+  background-color: darkred;
+}
+
+.dark-table thead td {
+  filter: brightness(1);
+  border-bottom-width: 2px;
+}
+
+.icon-disabled {
+  opacity: 0.3;
+}
+
+.navbar {
+  padding-left: 20px;
+}
+
+.navbar * {
+  color: white;
+}
+.navbar a:hover {
+  color: deepskyblue;
+}
+
+.navbar a:focus {
+  color: white;
 }

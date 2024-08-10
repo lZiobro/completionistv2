@@ -13,21 +13,21 @@ code {
 }
 
 .beatmap-table {
-  background-color: silver;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.beatmap-table table {
-  background-color: silver;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
+  border: 1px solid black;
 }
 
 .beatmap-table,
 td {
-  border: 1px solid black;
+  padding: 5px;
+}
+
+.beatmap-table tbody > tr:nth-child(4n-1) {
+  background-color: rgba(128, 128, 128, 0.1);
+}
+
+.beatmap-table thead {
+  font-size: 20px;
+  background-color: rgba(128, 128, 128, 0.5);
 }
 
 tr td.beatmap-table-complete {
@@ -35,18 +35,14 @@ tr td.beatmap-table-complete {
 }
 
 tr td.beatmap-table-partial {
-  background-color: yellow;
+  background-color: darkgoldenrod;
 }
 tr td.beatmap-table-unplayed {
-  background-color: red;
+  background-color: maroon;
 }
 
 .hidden-row {
   display: none;
-}
-
-.hidden-row td {
-  background-color: antiquewhite;
 }
 
 .make-row-visible {
@@ -55,4 +51,13 @@ tr td.beatmap-table-unplayed {
 
 .admin-panel {
   background-color: red;
+}
+
+.beatmap-table-subtable {
+  width: 100%;
+  border: 1px solid black;
+}
+
+.beatmap-table-subtable thead {
+  font-size: 16px;
 }
